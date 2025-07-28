@@ -74,9 +74,10 @@ fun main() = GtkApplication.create {
   app = this
 
   infoMenuItem = Menu.appendMenuLabel("Loading time ...")
-
+  Menu.appendSeparator()
   Menu.appendMenuButton("Switch", "appointment-new", staticCFunction(::switchTimeEntry))
   toggleMenuItem = Menu.appendMenuButton("Pause", "player_pause", staticCFunction(::toggleRunPause))
+  Menu.appendSeparator()
   Menu.appendMenuButton("Cancel", "process-stop", staticCFunction(::cancel))
   Menu.appendMenuButton("Quit", "exit", staticCFunction(::quit))
 

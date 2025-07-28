@@ -43,4 +43,11 @@ object Menu {
   fun changeMenuLabel(menuLabel: CPointer<GtkWidget>, label: String) {
     gtk_menu_item_set_label(menuLabel.reinterpret(), label)
   }
+
+  fun appendSeparator(): CPointer<GtkWidget>? {
+    val separator = gtk_separator_menu_item_new()
+    gtk_widget_show(separator)
+    gtk_menu_shell_append(REF?.reinterpret(), separator)
+    return separator
+  }
 }
