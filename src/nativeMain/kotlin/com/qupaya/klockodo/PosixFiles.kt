@@ -1,4 +1,4 @@
-package com.qupaya.toggl
+package com.qupaya.klockodo
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf

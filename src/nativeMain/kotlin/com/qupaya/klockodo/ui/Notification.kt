@@ -1,11 +1,11 @@
-package com.qupaya.toggl.ui
+package com.qupaya.klockodo.ui
 
-import com.qupaya.toggl.APP_NAME
-import com.qupaya.toggl.userHome
+import com.qupaya.klockodo.APP_NAME
+import com.qupaya.klockodo.userHome
 import kotlinx.cinterop.ExperimentalForeignApi
-import togglKlient.notify_init
-import togglKlient.notify_notification_new
-import togglKlient.notify_notification_show
+import klockodo.notify_init
+import klockodo.notify_notification_new
+import klockodo.notify_notification_show
 
 @OptIn(ExperimentalForeignApi::class)
 object Notification {
@@ -17,7 +17,7 @@ object Notification {
     val notification = notify_notification_new(
       APP_NAME,
       message,
-      "${userHome}/.local/share/toggl/toggl.png"
+      "${userHome}/.local/share/Klockodo/klockodo.png"
     )
     notify_notification_show(notification, null)
   }

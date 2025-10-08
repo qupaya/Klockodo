@@ -1,4 +1,4 @@
-package com.qupaya.toggl.signal
+package com.qupaya.klockodo.signal
 
 import platform.posix.SIGABRT
 import platform.posix.SIGBUS

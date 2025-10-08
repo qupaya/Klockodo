@@ -1,4 +1,4 @@
-package com.qupaya.toggl.api
+package com.qupaya.klockodo.api
 
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.format

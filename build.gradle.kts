@@ -3,7 +3,7 @@ plugins {
   alias(libs.plugins.kotlinSerialization)
 }
 
-group = "com.qupaya.toggl"
+group = "com.qupaya.klockodo"
 version = "1.0-SNAPSHOT"
 
 kotlin {
@@ -17,7 +17,7 @@ kotlin {
     }
     compilations.getByName("main") {
       cinterops {
-        val togglKlient by creating
+        val klockodo by creating
       }
     }
   }
@@ -30,7 +30,6 @@ kotlin {
         implementation(libs.ktor.client.serialization)
         implementation(libs.ktor.client.curl)
         implementation(libs.ktor.client.content)
-        implementation(libs.ktor.client.auth)
       }
     }
     nativeTest {

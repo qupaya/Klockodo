@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalForeignApi::class)
 
-package com.qupaya.toggl
+package com.qupaya.klockodo
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
@@ -11,12 +11,12 @@ import platform.posix.getenv
 @ExperimentalForeignApi
 val userHome = getenv("HOME")?.toKString()
 
-const val APP_NAME = "Toggl Klient"
+const val APP_NAME = "Klockodo"
 
 @Serializable
-data class Configuration(val apiKey: String, val workHoursPerDay: Double) {
+data class Configuration(val apiKey: String, val apiUser: String, val defaultProject: Int, val workSecondsPerDay: Long) {
   companion object {
-    const val CONFIGURATION_FILE = "/.config/toggl-klient/config.json"
+    const val CONFIGURATION_FILE = "/.config/Klockodo/config.json"
     val userConfigFile = "$userHome$CONFIGURATION_FILE"
 
     fun load(): Configuration {

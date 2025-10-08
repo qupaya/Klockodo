@@ -1,18 +1,15 @@
-package com.qupaya.toggl.api
+package com.qupaya.klockodo.api
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @OptIn(ExperimentalTime::class)
 @Serializable
-data class TimeEntryRequest(
-  val created_with: String,
-  val workspace_id: Long,
+data class StopTimeEntryRequest(
   @Contextual
   @Serializable(with = InstantSerializer::class)
-  val start: Instant,
-  val duration: Long,
-  val tags: List<String> = emptyList(),
+  val time_until: Instant = Clock.System.now()
 )

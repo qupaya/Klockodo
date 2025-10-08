@@ -1,10 +1,10 @@
-package com.qupaya.toggl.ui
+package com.qupaya.klockodo.ui
 
 import kotlinx.cinterop.CFunction
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.reinterpret
-import togglKlient.*
+import klockodo.*
 
 @OptIn(ExperimentalForeignApi::class)
 object Menu {

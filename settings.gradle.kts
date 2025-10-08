@@ -1,4 +1,4 @@
-rootProject.name = "toggl"
+rootProject.name = "Klockodo"
 
 pluginManagement {
   repositories {
@@ -9,6 +9,7 @@ pluginManagement {
 dependencyResolutionManagement {
   repositories {
     mavenCentral()
+
   }
 }
 

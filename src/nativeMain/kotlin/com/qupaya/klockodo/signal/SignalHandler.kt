@@ -1,16 +1,12 @@
-package com.qupaya.toggl.signal
+package com.qupaya.klockodo.signal
 
 import kotlinx.cinterop.CFunction
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.IntVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.nativeHeap
-import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
-import kotlinx.cinterop.reinterpret
 import kotlinx.cinterop.staticCFunction
-import kotlinx.cinterop.value
 import platform.posix.SA_NOCLDSTOP
 import platform.posix.abort
 import platform.posix.sigaction
@@ -19,7 +15,6 @@ import platform.posix.sigfillset
 import platform.posix.sigset_t
 import platform.posix.waitpid
 import quit
-import togglKlient.g_idle_add
 
 @OptIn(ExperimentalForeignApi::class)
 class SignalHandler {
@@ -71,22 +66,11 @@ class SignalHandler {
 
 @OptIn(ExperimentalForeignApi::class)
 private fun handleSignal(signalValue: Int) {
-  val data = nativeHeap.alloc(signalValue)
-  g_idle_add(
-    staticCFunction { d ->
-      val sigVal = d?.reinterpret<IntVar>()
-      val signal = Signal.entries.single { it.signalValue == sigVal?.pointed?.value }
-
-      d?.rawValue?.let { nativeHeap.free(it) }
-
-      println("Handle signal: $signal, ${signal.signalValue}")
-      when (signal) {
-        Signal.USR1, Signal.USR2, Signal.TTIN, Signal.TTOU -> println("Ignoring signal $signal")
-        Signal.CHLD -> while (waitpid(-1, null, platform.posix.WNOHANG) > 0);
-        else -> quit()
-      }
-      0
-    },
-    data.ptr.reinterpret(),
-  )
+  val signal = Signal.entries.single { it.signalValue == signalValue }
+  println("Handle signal: $signal (${signal.signalValue})")
+  when (signal) {
+    Signal.USR1, Signal.USR2, Signal.TTIN, Signal.TTOU -> println("Ignoring signal $signal")
+    Signal.CHLD -> while (waitpid(-1, null, platform.posix.WNOHANG) > 0);
+    else -> quit()
+  }
 }
