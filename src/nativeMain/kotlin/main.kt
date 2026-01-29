@@ -1,10 +1,14 @@
-import com.qupaya.klockodo.Configuration
+import com.qupaya.Configuration
 import com.qupaya.klockodo.Klockodo
-import com.qupaya.klockodo.signal.SignalHandler
-import com.qupaya.klockodo.ui.GtkApplication
-import com.qupaya.klockodo.ui.Indicator
-import com.qupaya.klockodo.ui.Menu
-import com.qupaya.klockodo.ui.Notification
+import com.qupaya.outbound.forBuildingEntryRequest.EntryRequestBuilder
+import com.qupaya.outbound.forGettingData.KlockodoApi
+import com.qupaya.outbound.forGettingTime.LocalTimer
+import com.qupaya.signal.SignalHandler
+import com.qupaya.ui.GtkApplication
+import com.qupaya.ui.Indicator
+import com.qupaya.ui.Menu
+import com.qupaya.ui.Notification
+import klockodo.GtkWidget
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.reinterpret
@@ -13,122 +17,133 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import klockodo.GtkWidget
-import kotlin.math.abs
+import kotlinx.datetime.DayOfWeek
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 
 var app: GtkApplication? = null
 
 val config = Configuration.load()
-val klockodo = Klockodo(config)
+val forGettingTime = LocalTimer()
+val api = KlockodoApi(config.apiKey, config.apiUser)
+val entryRequestBuilder = EntryRequestBuilder()
+val klockodo = Klockodo(config.workTimePerDay, api, forGettingTime, entryRequestBuilder)
 val signalHandler = SignalHandler()
 
 @OptIn(ExperimentalForeignApi::class)
 var toggleMenuItem: CPointer<GtkWidget>? = null
+
 @OptIn(ExperimentalForeignApi::class)
 var infoMenuItem: CPointer<GtkWidget>? = null
 var infoJob: Job? = null
 var isDone = false
 var reachedDailyMin = false
 
-const val MIN_WORK_HOURS_DAILY_SEC = 4 * 60 * 60
+val MIN_WORK_HOURS = 4.toDuration(DurationUnit.HOURS)
 
 fun switchTimeEntry() {
-  klockodo.switch()
-  println("Switch: ${klockodo.currentEntry?.id}")
+    klockodo.startLog()
 }
 
 @OptIn(ExperimentalForeignApi::class)
 fun toggleRunPause() {
-  val menuItem = toggleMenuItem ?: return
+    val menuItem = toggleMenuItem ?: return
 
-  if (klockodo.hasRunningTimeEntry()) {
-    klockodo.stop()
-    Indicator.showInactive()
-    Menu.changeMenuButtonLabelAndIcon(menuItem, "Continue", "player_play")
-    println("Pause")
-  } else {
-    klockodo.start()
-    setActiveIndicator()
-    Menu.changeMenuButtonLabelAndIcon(menuItem, "Pause", "player_pause")
-    println("Continue: ${klockodo.currentEntry?.id}")
-  }
+    if (klockodo.hasRunningLog()) {
+        klockodo.stopLog()
+        Indicator.showInactive()
+        Menu.changeMenuButtonLabelAndIcon(menuItem, "Continue", "player_play")
+    } else {
+        klockodo.startLog()
+        setActiveIndicator()
+        Menu.changeMenuButtonLabelAndIcon(menuItem, "Pause", "player_pause")
+    }
 }
 
 fun setActiveIndicator() {
-  when {
-    !reachedDailyMin -> Indicator.showMustWork()
-    isDone -> Indicator.showDone()
-    else -> Indicator.showMinDailyDone()
-  }
+    when {
+        !reachedDailyMin -> Indicator.showMustWork()
+        isDone -> Indicator.showDone()
+        else -> Indicator.showMinDailyDone()
+    }
 }
 
 fun quit() {
-  println("Quit")
-  app?.quitMainLoop()
-  app = null
+    app?.quitMainLoop()
+    app = null
 }
 
 @OptIn(ExperimentalForeignApi::class)
 fun main() = GtkApplication.create {
-  app = this
+    app = this
 
-  infoMenuItem = Menu.appendMenuLabel("Loading time ...")
-  Menu.appendSeparator()
-  Menu.appendMenuButton("Switch", "appointment-new", staticCFunction(::switchTimeEntry))
-  toggleMenuItem = Menu.appendMenuButton("Pause", "player_pause", staticCFunction(::toggleRunPause))
-  Menu.appendSeparator()
-  Menu.appendMenuButton("Quit", "exit", staticCFunction(::quit))
+    infoMenuItem = Menu.appendMenuLabel("Loading time ...")
+    Menu.appendSeparator()
+    Menu.appendMenuButton("Switch", "appointment-new", staticCFunction(::switchTimeEntry))
+    toggleMenuItem = Menu.appendMenuButton("Pause", "player_pause", staticCFunction(::toggleRunPause))
+    Menu.appendSeparator()
+    Menu.appendMenuButton("Quit", "exit", staticCFunction(::quit))
 
-  Indicator.init(Menu.REF?.reinterpret())
+    Indicator.init(Menu.REF?.reinterpret())
 
-  if (!klockodo.hasRunningTimeEntry()) {
-    klockodo.start()
-    println("Started: ${klockodo.currentEntry?.id}")
-  } else {
-    println("Found: ${klockodo.currentEntry?.id}")
-  }
+    val today = forGettingTime.getCurrentDate()
+    val isSupposedToWorkToday = !setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY).contains(today.dayOfWeek)
+    if (!isSupposedToWorkToday) {
+        Indicator.showInactive()
+    } else if (!klockodo.hasRunningLog()) {
+        klockodo.startLog()
+        setActiveIndicator()
+    } else {
+        setActiveIndicator()
+    }
 
-  val (secondsOpenToday, secondsOpenFromYear) = klockodo.getTimeToDo()
-  Notification.show("Today you need to work for ${secondsOpenToday.formatTime()} / ${secondsOpenFromYear.formatTime()}")
+    val (wtToday, wtYear) = klockodo.getWorkTime()
+    Notification.show("Today you need to work for\nD: ${wtToday.toHourMinuteString()} / Y: ${wtYear.toHourMinuteString()}")
 
-  infoJob = runInfoLoop()
+    infoJob = runInfoLoop()
 
-  runMainLoop {
-    signalHandler.cleanup()
-    klockodo.stop()
-    infoJob?.cancel()
-  }
+    runMainLoop {
+        signalHandler.cleanup()
+        klockodo.stopLog()
+        infoJob?.cancel()
+    }
 }
 
 @OptIn(ExperimentalForeignApi::class)
 fun CoroutineScope.runInfoLoop(): Job = launch {
-  while (true) {
-    val (secondsOpenToday, secondsOpenFromYear) = klockodo.getTimeToDo()
-    infoMenuItem?.run { Menu.changeMenuLabel(this, "To work: ${secondsOpenToday.formatTime()} / ${secondsOpenFromYear.formatTime()}") }
-    Indicator.setIndicatorTitle("To work: ${secondsOpenToday.formatTime()} / ${secondsOpenFromYear.formatTime()}")
-    var statusChanged = false
-    if (secondsOpenToday < MIN_WORK_HOURS_DAILY_SEC && !reachedDailyMin) {
-      reachedDailyMin = true
-      statusChanged = true
+    while (true) {
+        val (wtToday, wtYear) = klockodo.getWorkTime()
+        infoMenuItem?.run {
+            Menu.changeMenuLabel(
+                this,
+                "To work: D: ${wtToday.toHourMinuteString()} / Y: ${wtYear.toHourMinuteString()}"
+            )
+        }
+        var statusChanged = false
+        if (wtToday <= MIN_WORK_HOURS && !reachedDailyMin) {
+            reachedDailyMin = true
+            statusChanged = true
+        }
+        if (wtYear <= Duration.ZERO && !isDone) {
+            isDone = true
+            statusChanged = true
+        }
+        if (statusChanged && reachedDailyMin && isDone) {
+            Notification.show("You finished your work for today.")
+        }
+        if (statusChanged) {
+            setActiveIndicator()
+        }
+        delay(1000)
     }
-    if (secondsOpenFromYear <= 0 && !isDone) {
-      isDone = true
-      statusChanged = true
-    }
-    if (reachedDailyMin && isDone) {
-      Notification.show("You finished your work for today.")
-    }
-    if (statusChanged) {
-      setActiveIndicator()
-    }
-    delay(200)
-  }
 }
 
-fun Long.formatTime(): String {
-  val sign = if (this < 0) "-" else ""
-  val hours = this.div(3600)
-  val minutes = this.div(60).mod(60)
-  return "$sign${abs(hours).toString().padStart(2, '0')}:${abs(minutes).toString().padStart(2, '0')}"
+fun Duration.toHourMinuteString(): String {
+    val absoluteDuration = this.absoluteValue
+    val hours = "${absoluteDuration.inWholeHours}"
+    val minutes = "${absoluteDuration.inWholeMinutes % 60}"
+    val sign = if (this.isNegative()) "-" else ""
+    return "${sign}${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}"
 }

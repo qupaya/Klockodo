@@ -45,4 +45,4 @@ bin/
 .DS_Store
 
 ### Others ###
-interaction.http
+*.http

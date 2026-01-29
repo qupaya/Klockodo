@@ -1,70 +1,71 @@
 package com.qupaya.klockodo
 
-import com.qupaya.klockodo.api.KlockodoApi
-import com.qupaya.klockodo.api.EntryRequest
-import com.qupaya.klockodo.api.TimeEntry
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.todayIn
-import kotlin.time.Clock
+import com.qupaya.klockodo.inboundPorts.ForLoggingTime
+import com.qupaya.klockodo.model.WorkTime
+import com.qupaya.klockodo.outboundPorts.ForBuildingEntryRequests
+import com.qupaya.klockodo.outboundPorts.ForGettingData
+import com.qupaya.klockodo.outboundPorts.ForGettingTime
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
-class Klockodo(config: Configuration) {
-  private val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
-  private val klockodoApi = KlockodoApi(config.apiKey, config.apiUser)
-  private val report = klockodoApi.getUserReport(today)
-  var currentEntry = klockodoApi.loadRunningTimeEntry()
-    private set
-  private val todaysEntries = klockodoApi.getEntriesOfDay(today)
-  private var doneSecondsToday = todaysEntries.totalDuration.inWholeSeconds
-  private var doneSecondsSinceStart = 0L
-  private val targetSecondsDay = config.workSecondsPerDay
-  private val targetSecondsFromYear = -report.diff
+class Klockodo(
+    val workTimePerDay: Duration,
+    val forGettingData: ForGettingData,
+    val forGettingTime: ForGettingTime,
+    val forBuildingEntryRequests: ForBuildingEntryRequests
+) : ForLoggingTime {
+    val mutex = Mutex()
 
-  fun hasRunningTimeEntry(): Boolean = currentEntry != null
+    private val today = forGettingTime.getCurrentDate()
 
-  fun start() {
-    currentEntry = klockodoApi.logTimeEntry(EntryRequest(
-      4382930,
-      3526974,
-      1459279,
-      0
-    )).running
-  }
+    private val openWorkTimeOfYear = forGettingData.fetchOpenWorkTimeOfYear(today.year)
+    private val initialDoneWorkToday = forGettingData.fetchWorkedTimeOfDay(today)
 
-  fun stop() {
-    currentEntry?.run {
-      klockodoApi.stopTimeEntry(this).stopped?.let(::updateDoneTime)
+    private var currentEntry = forGettingData.getCurrentTimeEntry()
+
+    @OptIn(ExperimentalTime::class)
+    private val initialTodaysRunningTime =
+        currentEntry?.let { forGettingTime.getTime().minus(it.getStartTime()) } ?: Duration.ZERO
+
+    private var todaysDoneTime = Duration.ZERO
+
+    @OptIn(ExperimentalTime::class)
+    override fun getWorkTime(): WorkTime = runBlocking {
+        mutex.withLock {
+            val trackedRunningTime = currentEntry?.let { forGettingTime.getTime().minus(it.getStartTime()) }
+                ?: Duration.ZERO
+
+            WorkTime(
+                today = workTimePerDay - initialDoneWorkToday - trackedRunningTime - todaysDoneTime,
+                year = openWorkTimeOfYear - trackedRunningTime + initialTodaysRunningTime - todaysDoneTime
+            )
+        }
     }
-  }
 
-  fun switch() {
-    val runningTimeEntry = klockodoApi.logTimeEntry(EntryRequest(
-      4382930,
-      3526974,
-      1459279,
-      0
-    ))
-    currentEntry = runningTimeEntry.running
-    runningTimeEntry.stopped?.let(::updateDoneTime)
-  }
-
-  private fun updateDoneTime(timeEntry: TimeEntry) {
-    val duration = timeEntry.run {
-      duration ?: computedDuration?.inWholeSeconds ?: throw IllegalArgumentException("Unable to calculate duration of $id.")
+    override fun hasRunningLog(): Boolean = runBlocking {
+        mutex.withLock {
+            currentEntry != null
+        }
     }
-    doneSecondsToday += duration
-    doneSecondsSinceStart += duration
-  }
 
-  fun getTimeToDo(): Info {
-    val runningSeconds = currentEntry?.let {
-      val end = Clock.System.now()
-      end.epochSeconds - it.time_since.epochSeconds
-    } ?: 0
-    return Info(
-      targetSecondsDay - doneSecondsToday - runningSeconds,
-      targetSecondsFromYear - doneSecondsSinceStart - runningSeconds
-    )
-  }
+    override fun startLog() = runBlocking {
+        mutex.withLock {
+            val startedStoppedEntries = forGettingData.startTimeEntry(forBuildingEntryRequests.buildEntryRequest())
+            currentEntry = startedStoppedEntries.startedEntry
+            todaysDoneTime += startedStoppedEntries.stoppedEntry?.getDuration() ?: Duration.ZERO
+        }
+    }
+
+    override fun stopLog() = runBlocking {
+        mutex.withLock {
+            currentEntry?.let {
+                val updatedEntry = forGettingData.stopTimeEntry(it)
+                todaysDoneTime += updatedEntry?.getDuration() ?: Duration.ZERO
+            }
+            currentEntry = null
+        }
+    }
 }

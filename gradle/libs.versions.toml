@@ -1,16 +1,25 @@
 [versions]
-kotlin = "2.2.0"
+kotlin = "2.2.20"
 ktor = "3.2.1"
-atomicfu = "0.29.0"
+kotest = "6.1.1"
+ksp = "2.2.20-2.0.4"
+kotlinxCoroutines = "1.8.1"
+kotlinxDatetime = "0.7.1"
+kotlinxIO = "0.8.2"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core-linuxx64", version.ref = "ktor" }
 ktor-client-serialization = { module = "io.ktor:ktor-serialization-kotlinx-json-linuxx64", version.ref = "ktor" }
 ktor-client-curl = { module = "io.ktor:ktor-client-curl-linuxx64", version.ref = "ktor" }
 ktor-client-content = { module = "io.ktor:ktor-client-content-negotiation-linuxx64", version.ref = "ktor" }
-ktor-client-auth = { module = "io.ktor:ktor-client-auth-linuxx64", version.ref = "ktor" }
-kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-linuxx64", version.ref = "atomicfu" }
+kotestFrameworkEngine = { module = "io.kotest:kotest-framework-engine", version.ref = "kotest" }
+kotestAssertions = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotlinxCoroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core-linuxx64", version.ref = "kotlinxCoroutines" }
+kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime-linuxx64", version.ref = "kotlinxDatetime" }
+kotlinxIOCore = { module = "org.jetbrains.kotlinx:kotlinx-io-core", version.ref = "kotlinxIO" }
 
 [plugins]
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin"}
+kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotest = { id = "io.kotest", version.ref = "kotest" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

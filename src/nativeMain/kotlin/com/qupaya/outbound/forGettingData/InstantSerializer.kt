@@ -1,4 +1,4 @@
-package com.qupaya.klockodo.api
+package com.qupaya.outbound.forGettingData
 
 import kotlinx.datetime.UtcOffset
 import kotlinx.datetime.format
@@ -15,18 +15,18 @@ import kotlin.time.Instant
 
 @OptIn(ExperimentalTime::class)
 object InstantSerializer : KSerializer<Instant> {
-  override val descriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
+    override val descriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.STRING)
 
-  @OptIn(FormatStringsInDatetimeFormats::class)
-  private val formatter = DateTimeComponents.Format {
-    byUnicodePattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
-  }
+    @OptIn(FormatStringsInDatetimeFormats::class)
+    private val formatter = DateTimeComponents.Format {
+        byUnicodePattern("yyyy-MM-dd'T'HH:mm:ss.SSSX")
+    }
 
-  override fun serialize(encoder: Encoder, value: Instant) {
-    encoder.encodeString(value.format(formatter, UtcOffset.ZERO))
-  }
+    override fun serialize(encoder: Encoder, value: Instant) {
+        encoder.encodeString(value.format(formatter, UtcOffset.ZERO))
+    }
 
-  override fun deserialize(decoder: Decoder): Instant {
-    return Instant.parse(decoder.decodeString())
-  }
+    override fun deserialize(decoder: Decoder): Instant {
+        return Instant.parse(decoder.decodeString())
+    }
 }

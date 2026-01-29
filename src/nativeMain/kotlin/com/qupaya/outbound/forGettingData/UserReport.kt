@@ -1,4 +1,4 @@
-package com.qupaya.klockodo.api
+package com.qupaya.outbound.forGettingData
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
@@ -8,13 +8,13 @@ import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 @Serializable
 @JsonIgnoreUnknownKeys
 data class UserReport(
-  val users_id: Long,
-  val sum_target: Long,
-  val sum_hours: Long,
-  val diff: Long
+    val users_id: Long,
+    val sum_target: Long,
+    val sum_hours: Long,
+    val diff: Long
 )
 
 @Serializable
 data class UserReports(
-  val userreports: List<UserReport>
+    val userreports: List<UserReport>
 )
