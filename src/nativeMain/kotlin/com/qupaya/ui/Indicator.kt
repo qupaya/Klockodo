@@ -33,6 +33,10 @@ object Indicator {
         app_indicator_set_icon(REF, "${userHome}/.local/share/$APP_NAME/klockodo-min-daily-done.png")
     }
 
+    fun showMinYearlyDone() {
+        app_indicator_set_icon(REF, "${userHome}/.local/share/$APP_NAME/klockodo-min-yearly-done.png")
+    }
+
     fun showDone() {
         app_indicator_set_icon(REF, "${userHome}/.local/share/$APP_NAME/klockodo-done.png")
     }

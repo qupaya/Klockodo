@@ -1,5 +1,6 @@
 import com.qupaya.Configuration
 import com.qupaya.klockodo.Klockodo
+import com.qupaya.klockodo.inboundPorts.ForLoggingTime
 import com.qupaya.outbound.forBuildingEntryRequest.EntryRequestBuilder
 import com.qupaya.outbound.forGettingData.KlockodoApi
 import com.qupaya.outbound.forGettingTime.LocalTimer
@@ -29,7 +30,7 @@ val config = Configuration.load()
 val forGettingTime = LocalTimer()
 val api = KlockodoApi(config.apiKey, config.apiUser)
 val entryRequestBuilder = EntryRequestBuilder()
-val klockodo = Klockodo(config.workTimePerDay, api, forGettingTime, entryRequestBuilder)
+val klockodo: ForLoggingTime = Klockodo(config.workTimePerDay, api, forGettingTime, entryRequestBuilder)
 val signalHandler = SignalHandler()
 
 @OptIn(ExperimentalForeignApi::class)
@@ -38,7 +39,7 @@ var toggleMenuItem: CPointer<GtkWidget>? = null
 @OptIn(ExperimentalForeignApi::class)
 var infoMenuItem: CPointer<GtkWidget>? = null
 var infoJob: Job? = null
-var isDone = false
+var reachedYearlyMin = false
 var reachedDailyMin = false
 
 val MIN_WORK_HOURS = 4.toDuration(DurationUnit.HOURS)
@@ -64,9 +65,10 @@ fun toggleRunPause() {
 
 fun setActiveIndicator() {
     when {
-        !reachedDailyMin -> Indicator.showMustWork()
-        isDone -> Indicator.showDone()
-        else -> Indicator.showMinDailyDone()
+        reachedDailyMin && reachedYearlyMin -> Indicator.showDone()
+        reachedDailyMin -> Indicator.showMinDailyDone()
+        reachedYearlyMin -> Indicator.showMinYearlyDone()
+        else -> Indicator.showMustWork()
     }
 }
 
@@ -126,11 +128,11 @@ fun CoroutineScope.runInfoLoop(): Job = launch {
             reachedDailyMin = true
             statusChanged = true
         }
-        if (wtYear <= Duration.ZERO && !isDone) {
-            isDone = true
+        if (wtYear <= Duration.ZERO && !reachedYearlyMin) {
+            reachedYearlyMin = true
             statusChanged = true
         }
-        if (statusChanged && reachedDailyMin && isDone) {
+        if (statusChanged && reachedDailyMin && reachedYearlyMin) {
             Notification.show("You finished your work for today.")
         }
         if (statusChanged) {
@@ -144,6 +146,6 @@ fun Duration.toHourMinuteString(): String {
     val absoluteDuration = this.absoluteValue
     val hours = "${absoluteDuration.inWholeHours}"
     val minutes = "${absoluteDuration.inWholeMinutes % 60}"
-    val sign = if (this.isNegative()) "-" else ""
+    val sign = if (this.isNegative()) "" else "-"
     return "${sign}${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}"
 }
