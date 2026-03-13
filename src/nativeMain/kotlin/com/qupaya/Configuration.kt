@@ -7,7 +7,6 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 import kotlin.time.Duration
@@ -27,7 +26,6 @@ data class Configuration(
             if (userHome == null) {
                 throw RuntimeException("No home directory found")
             }
-            Duration.serializer()
 
             val userConfigPath = Path(userHome, ".config", APP_NAME, "config.json")
             if (!SystemFileSystem.exists(userConfigPath)) {

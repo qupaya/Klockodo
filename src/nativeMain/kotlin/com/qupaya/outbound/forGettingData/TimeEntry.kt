@@ -31,6 +31,7 @@ data class TimeEntry(
     val computedDuration: Duration? = time_until?.minus(time_since)
 
     override fun getStartTime(): Instant = time_since
+    override fun getEndTime(): Instant? = time_until
     override fun getDuration(): Duration? = computedDuration
 }
 

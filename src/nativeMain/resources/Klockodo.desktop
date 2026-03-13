@@ -8,4 +8,5 @@ RunHook=0
 StartupNotify=false
 Terminal=false
 Hidden=false
-
+Categories=Office;
+Icon=~/.local/share/Klockodo/klockodo.png

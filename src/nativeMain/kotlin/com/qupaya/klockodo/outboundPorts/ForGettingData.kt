@@ -10,6 +10,9 @@ interface ForGettingData {
         @OptIn(ExperimentalTime::class)
         fun getStartTime(): Instant
 
+        @OptIn(ExperimentalTime::class)
+        fun getEndTime(): Instant?
+
         fun getDuration(): Duration?
     }
 
