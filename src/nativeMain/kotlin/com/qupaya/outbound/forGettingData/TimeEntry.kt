@@ -39,8 +39,8 @@ data class TimeEntry(
 @Serializable
 @JsonIgnoreUnknownKeys
 data class RunningTimeEntry(
-    val running: TimeEntry?,
-    val stopped: TimeEntry?
+    val running: TimeEntry? = null,
+    val stopped: TimeEntry? = null
 )
 
 @OptIn(ExperimentalSerializationApi::class, ExperimentalTime::class)
@@ -61,6 +61,6 @@ data class EntryRequest(
     val customers_id: Long,
     val projects_id: Long,
     val services_id: Long,
-    val billable: Long,
-    val text: String? = null,
+    val text: String,
+    val billable: Long? = null,
 ) : ForBuildingEntryRequests.EntryRequest

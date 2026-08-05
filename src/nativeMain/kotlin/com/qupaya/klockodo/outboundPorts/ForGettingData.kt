@@ -21,13 +21,13 @@ interface ForGettingData {
         val stoppedEntry: TimeEntry?
     }
 
-    fun fetchOpenWorkTimeOfYear(year: Int): Duration
+    fun fetchOpenWorkTimeOfYear(year: Int): ApiResult<Duration>
 
-    fun fetchWorkedTimeOfDay(day: LocalDate): Duration
+    fun fetchWorkedTimeOfDay(day: LocalDate): ApiResult<Duration>
 
-    fun getCurrentTimeEntry(): TimeEntry?
+    fun getCurrentTimeEntry(): ApiResult<TimeEntry?>
 
-    fun startTimeEntry(request: ForBuildingEntryRequests.EntryRequest): StartedStoppedEntries
+    fun startTimeEntry(request: ForBuildingEntryRequests.EntryRequest): ApiResult<StartedStoppedEntries>
 
-    fun stopTimeEntry(entry: TimeEntry): TimeEntry?
+    fun stopTimeEntry(entry: TimeEntry): ApiResult<TimeEntry?>
 }

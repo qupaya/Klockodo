@@ -9,6 +9,7 @@ class EntryRequestBuilder : ForBuildingEntryRequests {
             4382930, // qupaya
             3526974, // General
             1459279, // internal
+            "-",
             0
         )
     }

@@ -4,6 +4,7 @@ import com.qupaya.klockodo.inboundPorts.ForLoggingTime
 import com.qupaya.outbound.forBuildingEntryRequest.EntryRequestBuilder
 import com.qupaya.outbound.forGettingData.KlockodoApi
 import com.qupaya.outbound.forGettingTime.LocalTimer
+import com.qupaya.outbound.forShowingNotifications.NotificationAdapter
 import com.qupaya.signal.SignalHandler
 import com.qupaya.ui.GtkApplication
 import com.qupaya.ui.Indicator
@@ -20,6 +21,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.DayOfWeek
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
@@ -30,7 +32,9 @@ val config = Configuration.load()
 val forGettingTime = LocalTimer()
 val api = KlockodoApi(config.apiKey, config.apiUser)
 val entryRequestBuilder = EntryRequestBuilder()
-val klockodo: ForLoggingTime = Klockodo(config.workTimePerDay, api, forGettingTime, entryRequestBuilder)
+val notificationAdapter = NotificationAdapter()
+val klockodo: ForLoggingTime =
+    Klockodo(config.workTimePerDay, api, forGettingTime, entryRequestBuilder, notificationAdapter)
 val signalHandler = SignalHandler()
 
 @OptIn(ExperimentalForeignApi::class)
@@ -138,7 +142,7 @@ fun CoroutineScope.runInfoLoop(): Job = launch {
         if (statusChanged) {
             setActiveIndicator()
         }
-        delay(1000)
+        delay(1000.milliseconds)
     }
 }
 
