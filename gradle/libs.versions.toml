@@ -5,7 +5,7 @@ kotest = "6.1.1"
 ksp = "2.2.20-2.0.4"
 kotlinxCoroutines = "1.8.1"
 kotlinxDatetime = "0.7.1"
-kotlinxIO = "0.8.2"
+kotlinxIO = "0.9.1"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core-linuxx64", version.ref = "ktor" }
