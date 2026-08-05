@@ -1,11 +1,11 @@
 [versions]
-kotlin = "2.2.20"
+kotlin = "2.4.10"
 ktor = "3.5.2"
-kotest = "6.1.5"
-ksp = "2.2.20-2.0.4"
+kotest = "6.2.3"
+ksp = "2.3.10"
 kotlinxCoroutines = "1.8.1"
 kotlinxDatetime = "0.7.1"
-kotlinxIO = "0.8.2"
+kotlinxIO = "0.9.1"
 
 [libraries]
 ktor-client-core = { module = "io.ktor:ktor-client-core-linuxx64", version.ref = "ktor" }
