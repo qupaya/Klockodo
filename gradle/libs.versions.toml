@@ -2,7 +2,7 @@
 kotlin = "2.4.10"
 ktor = "3.5.2"
 kotest = "6.2.3"
-ksp = "2.3.10"
+ksp = "2.3.11"
 kotlinxCoroutines = "1.11.0"
 kotlinxDatetime = "0.8.0"
 kotlinxIO = "0.9.1"
